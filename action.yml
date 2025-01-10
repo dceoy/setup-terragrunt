@@ -2,6 +2,9 @@
 name: Setup Terragrunt
 description: Install the latest or specified version of Terragrunt
 author: Daichi Narushima, Ph.D.
+branding:
+  icon: terminal
+  color: purple
 inputs:
   terragrunt-version:
     description: Terragrunt version to install
@@ -17,11 +20,27 @@ outputs:
   terragrunt-path:
     description: Terragrunt binary path
 runs:
-  using: docker
-  image: ./Dockerfile
-  args:
-    - ${{ inputs.terragrunt-version }}
-    - ${{ inputs.directory-path }}
-branding:
-  icon: terminal
-  color: purple
+  using: composite
+  steps:
+    - name: Setup Terragrunt
+      shell: bash -euo pipefail {0}
+      env:
+        TERRAGRUNT_VERSION: ${{ inputs.terragrunt-version }}
+      working-directory: ${{ inputs.directory-path }}
+      run: |
+        arch_type="$(uname -s | tr '[:upper:]' '[:lower:]')_$([[ "$(uname -m)" == 'x86_64' ]] && echo 'amd64' || echo 'arm64')"
+        if [[ "${TERRAGRUNT_VERSION}" == 'latest' ]]; then
+          curl -sSL https://api.github.com/repos/gruntwork-io/terragrunt/releases/latest \
+            | jq -r ".assets[] | select(.name | endswith(\"${arch_type}\")) | .browser_download_url" \
+            | xargs curl -sSL -o ./terragrunt
+        else
+          curl -sSL -o ./terragrunt \
+            "https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VERSION}/terragrunt_${arch_type}"
+        fi
+        chmod +x ./terragrunt
+    - name: Set outputs
+      shell: bash -euo pipefail {0}
+      working-directory: ${{ inputs.directory-path }}
+      run: |
+        ./terragrunt --version | sed -e 's/^terragrunt version //; s/^/terragrunt-version=/;' >> "${GITHUB_OUTPUT}"
+        realpath ./terragrunt | sed -e 's/^/terragrunt-path=/;' >> "${GITHUB_OUTPUT}"
