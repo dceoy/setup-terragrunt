@@ -1,0 +1,27 @@
+---
+name: Setup Terragrunt
+description: Install the latest or specified version of Terragrunt
+author: Daichi Narushima, Ph.D.
+inputs:
+  terragrunt-version:
+    description: Terragrunt version to install
+    required: false
+    default: latest
+  directory-path:
+    description: Directory path to install Terragrunt
+    required: false
+    default: /usr/local/bin
+outputs:
+  terragrunt-version:
+    description: Terragrunt version installed
+  terragrunt-path:
+    description: Terragrunt binary path
+runs:
+  using: docker
+  image: ./Dockerfile
+  args:
+    - ${{ inputs.terragrunt-version }}
+    - ${{ inputs.directory-path }}
+branding:
+  icon: terminal
+  color: purple

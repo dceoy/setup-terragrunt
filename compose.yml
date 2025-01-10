@@ -1,0 +1,17 @@
+---
+services:
+  setup-terragrunt:
+    container_name: setup-terragrunt
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/dceoy/setup-terragrunt:latest
+    volumes:
+      - .:/mnt/host
+    working_dir: /mnt/host
+    entrypoint:
+      - /usr/local/bin/entrypoint.sh
+    command:
+      - --debug
+      - latest
+      - .
