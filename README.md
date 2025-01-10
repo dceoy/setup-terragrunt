@@ -3,8 +3,6 @@ setup-terragrunt
 
 GitHub Action to install the latest or a specific version of Terragrunt
 
-[![CI](https://github.com/dceoy/setup-terragrunt/actions/workflows/ci.yml/badge.svg)](https://github.com/dceoy/setup-terragrunt/actions/workflows/ci.yml)
-
 Usage
 -----
 

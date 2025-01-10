@@ -1,5 +1,5 @@
 ---
-name: Setup Terragrunt
+name: Install the latest or specified version of Terragrunt
 description: Install the latest or specified version of Terragrunt
 author: Daichi Narushima, Ph.D.
 branding:
