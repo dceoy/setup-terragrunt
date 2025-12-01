@@ -18,10 +18,15 @@ jobs:
     strategy:
       matrix:
         include:
-          - version: latest
-            directory: /usr/local/bin
-          - version: 0.93.11
-            directory: .
+          - uses: ./
+            tg-version: latest
+            tg-directory: /usr/local/bin
+          - uses: ./
+            tg-version: 0.93.11
+            tg-directory: .
+          - uses: dceoy/setup-terragrunt@v2
+            tg-version: latest
+            tg-directory: /usr/local/bin
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -30,13 +35,13 @@ jobs:
           persist-credentials: false
       - name: Setup Terragrunt
         id: setup-terragrunt
-        uses: ./
+        uses: ${{ matrix.uses }}
         with:
-          terragrunt-version: ${{ matrix.version }}
-          directory-path: ${{ matrix.directory }}
+          terragrunt-version: ${{ matrix.tg-version }}
+          directory-path: ${{ matrix.tg-directory }}
       - name: Verify Terragrunt installation
         env:
-          INPUT_TG_VERSION: ${{ matrix.version }}
+          INPUT_TG_VERSION: ${{ matrix.tg-version }}
           OUTPUT_TG_VERSION: ${{ steps.setup-terragrunt.outputs.terragrunt-version }}
           OUTPUT_TG_PATH: ${{ steps.setup-terragrunt.outputs.terragrunt-path }}
         run: |
