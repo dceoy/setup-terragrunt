@@ -8,7 +8,7 @@ on:
     branches:
       - main
 jobs:
-  github-action-test:
+  local-test:
     permissions:
       contents: read
     defaults:
@@ -18,15 +18,10 @@ jobs:
     strategy:
       matrix:
         include:
-          - uses: ./
-            tg-version: latest
+          - tg-version: latest
             tg-directory: /usr/local/bin
-          - uses: ./
-            tg-version: 0.93.11
+          - tg-version: 0.93.11
             tg-directory: .
-          - uses: dceoy/setup-terragrunt@v2
-            tg-version: latest
-            tg-directory: /usr/local/bin
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -35,7 +30,7 @@ jobs:
           persist-credentials: false
       - name: Setup Terragrunt
         id: setup-terragrunt
-        uses: ${{ matrix.uses }}
+        uses: ./
         with:
           terragrunt-version: ${{ matrix.tg-version }}
           directory-path: ${{ matrix.tg-directory }}
@@ -63,11 +58,21 @@ jobs:
             exit 4
           fi
           printf 'Terragrunt %s installed at %s\n' "${actual_version}" "${OUTPUT_TG_PATH}"
+  published-version-test:
+    if: >
+      github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Terragrunt
+        uses: dceoy/setup-terragrunt@v1  # zizmor: ignore[unpinned-uses]
   dependabot-auto-merge:
     if: >
-      github.event_name == 'pull_request' && github.actor == 'dependabot[bot]'
+      github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
     needs:
-      - github-action-test
+      - local-test
+      - published-version-test
     uses: dceoy/gh-actions-for-devops/.github/workflows/dependabot-auto-merge.yml@main
     permissions:
       contents: write
