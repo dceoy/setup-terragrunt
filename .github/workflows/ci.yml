@@ -67,12 +67,21 @@ jobs:
     steps:
       - name: Setup Terragrunt
         uses: dceoy/setup-terragrunt@v1  # zizmor: ignore[unpinned-uses]
+  github-actions-lint-and-scan:
+    permissions:
+      contents: read
+    uses: dceoy/gh-actions-for-devops/.github/workflows/github-actions-lint-and-scan.yml@main
+    with:
+      search-path: .github/workflows
+      go-version: stable
+      python-version: 3.x
   dependabot-auto-merge:
     if: >
       github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
     needs:
       - local-test
       - published-version-test
+      - github-actions-lint-and-scan
     uses: dceoy/gh-actions-for-devops/.github/workflows/dependabot-auto-merge.yml@main
     permissions:
       contents: write
