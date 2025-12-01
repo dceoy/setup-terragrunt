@@ -19,6 +19,7 @@ steps:
 |:-------------------|:-------|:-----------------|:----------------------------------------------------|
 | terragrunt-version | string | `latest`         | Terragrunt version (`latest` or a specific version) |
 | directory-path     | string | `/usr/local/bin` | Directory path to install Terragrunt                |
+| max-attempts       | number | `5`              | Maximum retry attempts for downloads                |
 
 ##### Outputs
 
