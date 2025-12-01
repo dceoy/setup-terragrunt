@@ -7,15 +7,14 @@ on:
   pull_request:
     branches:
       - main
-permissions:
-  contents: read
-defaults:
-  run:
-    shell: bash -euo pipefail {0}
-    working-directory: .
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  github-action-test:
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash -euo pipefail {0}
+        working-directory: .
     strategy:
       matrix:
         include:
@@ -23,6 +22,7 @@ jobs:
             directory: /usr/local/bin
           - version: 0.93.11
             directory: .
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
@@ -58,3 +58,15 @@ jobs:
             exit 4
           fi
           printf 'Terragrunt %s installed at %s\n' "${actual_version}" "${OUTPUT_TG_PATH}"
+  dependabot-auto-merge:
+    if: >
+      github.event_name == 'pull_request' && github.actor == 'dependabot[bot]'
+    needs:
+      - github-action-test
+    uses: dceoy/gh-actions-for-devops/.github/workflows/dependabot-auto-merge.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+    with:
+      unconditional: true
