@@ -14,33 +14,89 @@ inputs:
     description: Directory path to install Terragrunt
     required: false
     default: /usr/local/bin
+  max-attempts:
+    description: Maximum retry attempts for downloads
+    required: false
+    default: 5
 outputs:
   terragrunt-version:
     description: Terragrunt version installed
+    value: ${{ steps.set-outputs.outputs.terragrunt-version }}
   terragrunt-path:
     description: Terragrunt binary path
+    value: ${{ steps.set-outputs.outputs.terragrunt-path }}
 runs:
   using: composite
   steps:
-    - name: Setup Terragrunt
+    - name: Validate inputs
       shell: bash -euo pipefail {0}
       env:
         TERRAGRUNT_VERSION: ${{ inputs.terragrunt-version }}
+        DIRECTORY_PATH: ${{ inputs.directory-path }}
+        MAX_ATTEMPTS: ${{ inputs.max-attempts }}
+      run: |
+        if [[ "${TERRAGRUNT_VERSION}" != 'latest' ]] && (! [[ "${TERRAGRUNT_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]); then
+          echo "Input 'terragrunt-version' must be 'latest' or a valid version number (e.g., '0.35.16')." >&2
+          exit 1
+        elif [[ ! -w "${DIRECTORY_PATH}" ]] || [[ ! -d "${DIRECTORY_PATH}" ]]; then
+          echo "Input 'directory-path' must be an existing writable directory." >&2
+          exit 2
+        elif (! [[ "${MAX_ATTEMPTS}" =~ ^[1-9][0-9]*$ ]]); then
+          echo "Input 'max-attempts' must be a positive integer." >&2
+          exit 3
+        fi
+    - name: Determine architecture
+      shell: bash -euo pipefail {0}
+      run: |
+        arch_os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+        arch_type="${arch_os}_$([[ "$(uname -m)" == 'x86_64' ]] && echo 'amd64' || echo 'arm64')"
+        echo "ARCH_TYPE=${arch_type}" >> "${GITHUB_ENV}"
+    - name: Download Terragrunt
+      shell: bash -euo pipefail {0}
+      env:
+        TERRAGRUNT_VERSION: ${{ inputs.terragrunt-version }}
+        MAX_ATTEMPTS: ${{ inputs.max-attempts }}
       working-directory: ${{ inputs.directory-path }}
       run: |
-        arch_type="$(uname -s | tr '[:upper:]' '[:lower:]')_$([[ "$(uname -m)" == 'x86_64' ]] && echo 'amd64' || echo 'arm64')"
+        retry_with_backoff() {
+          local x=1
+          for ((i=0; i<MAX_ATTEMPTS; i++)); do
+            if [[ ${i} -ge 1 ]]; then
+              sleep $((2 ** (i - 1)))
+            fi
+            if "${@}"; then
+              return 0
+            else
+              x=${?}
+            fi
+          done
+          return ${x}
+        }
         if [[ "${TERRAGRUNT_VERSION}" == 'latest' ]]; then
-          curl -sSL https://api.github.com/repos/gruntwork-io/terragrunt/releases/latest \
-            | jq -r ".assets[] | select(.name | endswith(\"${arch_type}\")) | .browser_download_url" \
-            | xargs curl -sSL -o ./terragrunt
+          release_json="$(retry_with_backoff curl -sSL https://api.github.com/repos/gruntwork-io/terragrunt/releases/latest)"
+          download_url="$(printf '%s' "${release_json}" | jq -r --arg arch "${ARCH_TYPE}" '.assets[] | select(.name | endswith($arch)) | .browser_download_url')"
+          if [[ -z "${download_url}" || "${download_url}" == 'null' ]]; then
+            echo "Unable to determine download URL for architecture ${ARCH_TYPE}" >&2
+            exit 1
+          fi
+          retry_with_backoff curl -sSL -o ./terragrunt "${download_url}"
         else
-          curl -sSL -o ./terragrunt \
-            "https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VERSION}/terragrunt_${arch_type}"
+          retry_with_backoff curl -sSL -o ./terragrunt \
+            "https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VERSION}/terragrunt_${ARCH_TYPE}"
         fi
-        chmod +x ./terragrunt
-    - name: Set outputs
+    - name: Make Terragrunt executable
       shell: bash -euo pipefail {0}
       working-directory: ${{ inputs.directory-path }}
       run: |
-        ./terragrunt --version | sed -e 's/^terragrunt version //; s/^/terragrunt-version=/;' >> "${GITHUB_OUTPUT}"
-        realpath ./terragrunt | sed -e 's/^/terragrunt-path=/;' >> "${GITHUB_OUTPUT}"
+        chmod +x ./terragrunt
+    - name: Set outputs
+      id: set-outputs
+      shell: bash -euo pipefail {0}
+      working-directory: ${{ inputs.directory-path }}
+      run: |
+        terragrunt_version="$(./terragrunt --version | sed 's/^terragrunt version //')"
+        terragrunt_path="$(realpath ./terragrunt)"
+        {
+          printf 'terragrunt-version=%s\n' "${terragrunt_version}"
+          printf 'terragrunt-path=%s\n' "${terragrunt_path}"
+        } >> "${GITHUB_OUTPUT}"
