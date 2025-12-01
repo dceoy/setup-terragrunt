@@ -30,16 +30,16 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
         with:
           persist-credentials: false
-      - name: Install Terragrunt
-        id: terragrunt
+      - name: Setup Terragrunt
+        id: setup-terragrunt
         uses: ./
         with:
           terragrunt-version: ${{ matrix.version }}
           directory-path: ${{ matrix.directory }}
       - name: Verify Terragrunt installation
         env:
-          TERRAGRUNT_VERSION: ${{ steps.terragrunt.outputs.terragrunt-version }}
-          TERRAGRUNT_PATH: ${{ steps.terragrunt.outputs.terragrunt-path }}
+          TERRAGRUNT_VERSION: ${{ steps.setup-terragrunt.outputs.terragrunt-version }}
+          TERRAGRUNT_PATH: ${{ steps.setup-terragrunt.outputs.terragrunt-path }}
         run: |
           if [[ -z "${TERRAGRUNT_VERSION}" ]]; then
             echo "Terragrunt version output is empty." >&2

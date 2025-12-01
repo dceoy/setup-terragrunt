@@ -21,8 +21,10 @@ inputs:
 outputs:
   terragrunt-version:
     description: Terragrunt version installed
+    value: ${{ steps.set-outputs.outputs.terragrunt-version }}
   terragrunt-path:
     description: Terragrunt binary path
+    value: ${{ steps.set-outputs.outputs.terragrunt-path }}
 runs:
   using: composite
   steps:
@@ -88,8 +90,13 @@ runs:
       run: |
         chmod +x ./terragrunt
     - name: Set outputs
+      id: set-outputs
       shell: bash -euo pipefail {0}
       working-directory: ${{ inputs.directory-path }}
       run: |
-        ./terragrunt --version | sed -e 's/^terragrunt version //; s/^/terragrunt-version=/;' >> "${GITHUB_OUTPUT}"
-        realpath ./terragrunt | sed -e 's/^/terragrunt-path=/;' >> "${GITHUB_OUTPUT}"
+        terragrunt_version="$(./terragrunt --version | sed 's/^terragrunt version //')"
+        terragrunt_path="$(realpath ./terragrunt)"
+        {
+          printf 'terragrunt-version=%s\n' "${terragrunt_version}"
+          printf 'terragrunt-path=%s\n' "${terragrunt_path}"
+        } >> "${GITHUB_OUTPUT}"
