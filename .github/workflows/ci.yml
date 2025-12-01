@@ -1,0 +1,57 @@
+---
+name: Tests
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash -euo pipefail {0}
+    working-directory: .
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        include:
+          - version: latest
+            directory: /usr/local/bin
+          - version: 0.93.11
+            directory: .
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Install Terragrunt
+        id: terragrunt
+        uses: ./
+        with:
+          terragrunt-version: ${{ matrix.version }}
+          directory-path: ${{ matrix.directory }}
+      - name: Verify Terragrunt installation
+        env:
+          TERRAGRUNT_VERSION: ${{ steps.terragrunt.outputs.terragrunt-version }}
+          TERRAGRUNT_PATH: ${{ steps.terragrunt.outputs.terragrunt-path }}
+        run: |
+          if [[ -z "${TERRAGRUNT_VERSION}" ]]; then
+            echo "Terragrunt version output is empty." >&2
+            exit 1
+          fi
+          if [[ -z "${TERRAGRUNT_PATH}" ]] || [[ ! -x "${TERRAGRUNT_PATH}" ]]; then
+            echo "Terragrunt path '${TERRAGRUNT_PATH}' is missing or not executable." >&2
+            exit 2
+          fi
+          actual_version="$("${TERRAGRUNT_PATH}" --version | sed 's/^terragrunt version //')"
+          if [[ "${TERRAGRUNT_VERSION}" != "latest" ]] && [[ "${actual_version}" != "${TERRAGRUNT_VERSION}" ]]; then
+            echo "Expected version ${TERRAGRUNT_VERSION}, but got ${actual_version}." >&2
+            exit 3
+          fi
+          printf 'Terragrunt %s installed at %s\n' "${actual_version}" "${TERRAGRUNT_PATH}"

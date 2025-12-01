@@ -37,7 +37,7 @@ runs:
           echo "Input 'terragrunt-version' must be 'latest' or a valid version number (e.g., '0.35.16')." >&2
           exit 1
         elif [[ ! -w "${DIRECTORY_PATH}" ]] || [[ ! -d "${DIRECTORY_PATH}" ]]; then
-          echo "Directory path '${DIRECTORY_PATH}' does not exist or is not writable." >&2
+          echo "Input 'directory-path' must be an existing writable directory." >&2
           exit 2
         elif (! [[ "${MAX_ATTEMPTS}" =~ ^[1-9][0-9]*$ ]]); then
           echo "Input 'max-attempts' must be a positive integer." >&2
