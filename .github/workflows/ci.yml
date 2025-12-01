@@ -16,8 +16,6 @@ defaults:
 jobs:
   test:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     strategy:
       matrix:
         include:
@@ -38,20 +36,25 @@ jobs:
           directory-path: ${{ matrix.directory }}
       - name: Verify Terragrunt installation
         env:
-          TERRAGRUNT_VERSION: ${{ steps.setup-terragrunt.outputs.terragrunt-version }}
-          TERRAGRUNT_PATH: ${{ steps.setup-terragrunt.outputs.terragrunt-path }}
+          INPUT_TG_VERSION: ${{ matrix.version }}
+          OUTPUT_TG_VERSION: ${{ steps.setup-terragrunt.outputs.terragrunt-version }}
+          OUTPUT_TG_PATH: ${{ steps.setup-terragrunt.outputs.terragrunt-path }}
         run: |
-          if [[ -z "${TERRAGRUNT_VERSION}" ]]; then
+          if [[ -z "${OUTPUT_TG_VERSION}" ]]; then
             echo "Terragrunt version output is empty." >&2
             exit 1
           fi
-          if [[ -z "${TERRAGRUNT_PATH}" ]] || [[ ! -x "${TERRAGRUNT_PATH}" ]]; then
-            echo "Terragrunt path '${TERRAGRUNT_PATH}' is missing or not executable." >&2
+          if [[ -z "${OUTPUT_TG_PATH}" ]] || [[ ! -x "${OUTPUT_TG_PATH}" ]]; then
+            echo "Terragrunt path '${OUTPUT_TG_PATH}' is missing or not executable." >&2
             exit 2
           fi
-          actual_version="$("${TERRAGRUNT_PATH}" --version | sed 's/^terragrunt version //')"
-          if [[ "${TERRAGRUNT_VERSION}" != "latest" ]] && [[ "${actual_version}" != "${TERRAGRUNT_VERSION}" ]]; then
-            echo "Expected version ${TERRAGRUNT_VERSION}, but got ${actual_version}." >&2
+          if [[ "${OUTPUT_TG_VERSION}" == "latest" ]] && [[ "${OUTPUT_TG_VERSION}" != "v${INPUT_TG_VERSION}" ]]; then
+            echo "Expected version ${INPUT_TG_VERSION}, but got ${OUTPUT_TG_VERSION}." >&2
             exit 3
           fi
-          printf 'Terragrunt %s installed at %s\n' "${actual_version}" "${TERRAGRUNT_PATH}"
+          actual_version="$("${OUTPUT_TG_PATH}" --version | sed 's/^terragrunt version //')"
+          if [[ "${actual_version#v}" != "${OUTPUT_TG_VERSION#v}" ]]; then
+            echo "Terragrunt binary version ${actual_version#v} does not match expected version ${OUTPUT_TG_VERSION#v}." >&2
+            exit 4
+          fi
+          printf 'Terragrunt %s installed at %s\n' "${actual_version}" "${OUTPUT_TG_PATH}"
