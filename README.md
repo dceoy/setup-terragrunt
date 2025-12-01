@@ -8,7 +8,7 @@ Usage
 
 ```yaml
 steps:
-  - uses: dceoy/setup-terragrunt@v1
+  - uses: dceoy/setup-terragrunt@v2
     with:
       terragrunt-version: latest
 ```
