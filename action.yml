@@ -58,7 +58,7 @@ runs:
       run: |
         retry_with_backoff() {
           local x=1
-          for i in ((i=0; i<MAX_ATTEMPTS; i++)); do
+          for ((i=0; i<MAX_ATTEMPTS; i++)); do
             if [[ ${i} -ge 1 ]]; then
               sleep $((2 ** (i - 1)))
             fi
