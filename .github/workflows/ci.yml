@@ -66,7 +66,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Terragrunt
-        uses: dceoy/setup-terragrunt@v1  # zizmor: ignore[unpinned-uses]
+        uses: dceoy/setup-terragrunt@v2  # zizmor: ignore[unpinned-uses]
   github-actions-lint-and-scan:
     permissions:
       contents: read
