@@ -7,14 +7,14 @@ on:
   pull_request:
     branches:
       - main
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash -euo pipefail {0}
+    working-directory: .
 jobs:
   local-test:
-    permissions:
-      contents: read
-    defaults:
-      run:
-        shell: bash -euo pipefail {0}
-        working-directory: .
     strategy:
       matrix:
         include:
@@ -61,8 +61,6 @@ jobs:
   published-version-test:
     if: >
       github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
-    permissions:
-      contents: read
     runs-on: ubuntu-latest
     steps:
       - name: Setup Terragrunt
