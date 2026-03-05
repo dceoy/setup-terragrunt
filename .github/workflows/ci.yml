@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 permissions:
   contents: read
 defaults:
@@ -60,7 +61,8 @@ jobs:
           printf 'Terragrunt %s installed at %s\n' "${actual_version}" "${OUTPUT_TG_PATH}"
   published-version-test:
     if: >
-      github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
+      github.event_name == 'workflow_dispatch'
+      || github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Setup Terragrunt
