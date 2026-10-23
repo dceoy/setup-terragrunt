@@ -89,7 +89,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Terragrunt
-        uses: dceoy/setup-terragrunt@1cbef4029fa29d03260e3572cd1df1d45fd3f290  # v2
+        uses: dceoy/setup-terragrunt@v2  # zizmor: ignore[unpinned-uses]
   github-major-version-tag:
     if: >
       (github.event_name == 'release' && github.event.action == 'released')
