@@ -8,7 +8,7 @@ GitHub Action to install the latest or a specific version of Terragrunt
 
 ```yaml
 steps:
-  - uses: dceoy/setup-terragrunt@v2
+  - uses: dceoy/setup-terragrunt@1cbef4029fa29d03260e3572cd1df1d45fd3f290 # v2.0.0
     with:
       terragrunt-version: latest
 ```
