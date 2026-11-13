@@ -40,7 +40,7 @@ jobs:
           persist-credentials: false
       - name: Setup Terragrunt
         id: setup-terragrunt
-        uses: ./
+        uses: $/
         with:
           terragrunt-version: ${{ matrix.tg-version }}
           directory-path: ${{ matrix.tg-directory }}
