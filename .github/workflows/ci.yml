@@ -40,7 +40,7 @@ jobs:
           persist-credentials: false
       - name: Setup Terragrunt
         id: setup-terragrunt
-        uses: ./
+        uses: $/  # nosemgrep: yaml.github-actions.security.github-actions-mutable-action-tag.github-actions-mutable-action-tag
         with:
           terragrunt-version: ${{ matrix.tg-version }}
           directory-path: ${{ matrix.tg-directory }}
@@ -80,6 +80,7 @@ jobs:
     uses: dceoy/gha-for-devops/.github/workflows/github-actions-lint-and-scan.yml@9e394d7c18b3a00fb853cd3c693cc4eeb5f0c825  # v2.3.0
     with:
       search-path: .github/workflows
+      actionlint-extra-ignore-regex: 'specifying action "\$/" in invalid format because ref is missing'
       go-version: stable
       python-version: 3.x
   published-version-test:
