@@ -73,17 +73,12 @@ runs:
           return ${x}
         }
         if [[ "${TERRAGRUNT_VERSION}" == 'latest' ]]; then
-          release_json="$(retry_with_backoff curl -sSL https://api.github.com/repos/gruntwork-io/terragrunt/releases/latest)"
-          download_url="$(printf '%s' "${release_json}" | jq -r --arg arch "${ARCH_TYPE}" '.assets[] | select(.name | endswith($arch)) | .browser_download_url')"
-          if [[ -z "${download_url}" || "${download_url}" == 'null' ]]; then
-            echo "Unable to determine download URL for architecture ${ARCH_TYPE}" >&2
-            exit 1
-          fi
-          retry_with_backoff curl -sSL -o ./terragrunt "${download_url}"
+          release_path='latest/download'
         else
-          retry_with_backoff curl -sSL -o ./terragrunt \
-            "https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VERSION}/terragrunt_${ARCH_TYPE}"
+          release_path="download/v${TERRAGRUNT_VERSION}"
         fi
+        retry_with_backoff curl -fsSL -o ./terragrunt \
+          "https://github.com/gruntwork-io/terragrunt/releases/${release_path}/terragrunt_${ARCH_TYPE}"
     - name: Make Terragrunt executable
       shell: bash -euo pipefail {0}
       working-directory: ${{ inputs.directory-path }}
